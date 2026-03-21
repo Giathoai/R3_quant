@@ -60,7 +60,10 @@ def run_eval(model_path, data_path, num_samples=20):
             )[0]
 
             prediction = output_text.strip().upper()
-            target = str(row['answer']).upper()
+            
+            # Chuyển đổi index số (0, 1, 2) sang chữ cái (A, B, C)
+            target_idx = int(row['answer'])
+            target = chr(ord('A') + target_idx)
 
             if target in prediction:
                 correct += 1
