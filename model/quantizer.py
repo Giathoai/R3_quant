@@ -1,14 +1,9 @@
-import torch
-import os
 import sys
-from transformers import (
-    AutoProcessor, 
-    Qwen2_5_VLForConditionalGeneration, 
-    GPTQConfig, 
-    AutoConfig
-)
+import os
+import torch
+from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration, GPTQConfig, AutoConfig
 
-# Thêm đường dẫn để load dữ liệu local
+# Đảm bảo load được module dữ liệu
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.dataset_loader import ScienceQALocalLoader
 
@@ -19,36 +14,32 @@ class QwenGPTQQuantizer:
         self.data_path = data_path
 
     def get_calibration_data(self, test_size=8):
-        print(f"--- Đang tải {test_size} mẫu dữ liệu calibration ---")
+        print(f"--- Đang tải dữ liệu calibration (Size: {test_size}) ---")
         loader = ScienceQALocalLoader(self.data_path, subset_size=test_size)
         df = loader.preprocess_for_r3_quant()
         # Doc: "You could also pass your own dataset as a list of strings"
         return [f"Question: {row['question']}\nAnswer: {row['reasoning']}" for _, row in df.iterrows()]
 
     def quantize_and_save(self, bits=3):
-        # 1. Chuẩn bị dữ liệu
-        calib_dataset = self.get_calibration_data(test_size=8) # Test thử 8 mẫu trước
+        calib_dataset = self.get_calibration_data(test_size=8)
         
-        # 2. Cấu hình GPTQConfig (Theo đúng Doc)
-        # Lưu ý: Doc ghi ExLlama chỉ hỗ trợ 4-bit, nên với 3-bit ta phải tắt use_exllama
+        # SỬA LỖI TẠI ĐÂY: Sử dụng GPTQConfig theo đúng tài liệu HF bạn gửi
         gptq_config = GPTQConfig(
-            bits=bits, 
-            dataset=calib_dataset, 
-            tokenizer=self.base_model_path,
-            use_exllama=False, # Bắt buộc False cho 3-bit
+            bits=bits,
+            dataset=calib_dataset,
+            tokenizer=self.base_model_path, # Doc: cần tokenizer để prep dataset
+            use_exllama=False,             # 3-bit không hỗ trợ ExLlama
             desc_act=False,
             sym=True
         )
 
-        print(f"--- Đang bắt đầu Quantization {bits}-bit ---")
-        
-        # 3. Vá lỗi use_cache (đặc thù của Qwen2.5-VL chưa có trong doc nhưng cần để chạy)
+        # Vá lỗi use_cache đặc thù của dòng Qwen2.5-VL
         config = AutoConfig.from_pretrained(self.base_model_path)
         config.use_cache = False
 
+        print(f"--- Đang tải model và bắt đầu lượng tử hóa ({bits}-bit)... ---")
         try:
-            # 4. Load model và thực hiện quantize (Theo Doc)
-            # device_map="auto" giúp di chuyển các module giữa CPU/GPU để tối ưu RAM
+            # Load model theo đúng hướng dẫn trong Doc (from_pretrained + quantization_config)
             model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 self.base_model_path,
                 config=config,
@@ -58,21 +49,20 @@ class QwenGPTQQuantizer:
                 low_cpu_mem_usage=True
             )
 
-            # 5. Lưu model (Theo Doc: Nếu dùng device_map, nên đưa về CPU trước khi save)
-            print(f"--- Đang di chuyển model về CPU để lưu an toàn ---")
+            # Lưu model (Theo Doc: nên đưa về CPU nếu dùng device_map)
+            print("--- Lượng tử hóa xong. Đang lưu model... ---")
             model.to("cpu")
-            
             os.makedirs(self.save_path, exist_ok=True)
             model.save_pretrained(self.save_path)
             
             processor = AutoProcessor.from_pretrained(self.base_model_path)
             processor.save_pretrained(self.save_path)
+            print(f"--- Hoàn tất! Model đã lưu tại: {self.save_path} ---")
             
-            print(f"--- Hoàn tất! Model lưu tại: {self.save_path} ---")
-
         except Exception as e:
-            print(f"--- Lỗi Quantization: {e} ---")
-            sys.exit(1)
+            print(f"--- Lỗi trong quá trình xử lý: {e} ---")
+            # THÊM DÒNG NÀY: Để file main.py không báo [SUCCESS] giả
+            sys.exit(1) 
 
 if __name__ == "__main__":
     BASE_MODEL = r"./weights/Qwen2.5-VL-3B-Instruct"
