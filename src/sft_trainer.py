@@ -29,7 +29,6 @@ def train_sft_baseline(model_dir: str, train_data, output_dir: str):
         bf16=True,                   
         remove_unused_columns=False, 
         report_to="none",
-        dataset_kwargs={"skip_prepare_dataset": True} 
     )
 
     trainer = SFTTrainer(
