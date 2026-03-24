@@ -44,7 +44,7 @@ def train_sft_baseline(model_dir: str, train_data, output_dir: str):
     processor.save_pretrained(output_dir) 
 
 if __name__ == "__main__":
-    raw_scienceqa = load_dataset("derek-thomas/ScienceQA", split="train[:10]")
+    raw_scienceqa = load_dataset("derek-thomas/ScienceQA", split="validation")
     
     MODEL_DIR = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3" 
     OUTPUT_DIR = r"./sft_baseline_checkpoints" 
