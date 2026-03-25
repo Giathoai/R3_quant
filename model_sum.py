@@ -1,5 +1,5 @@
 import torch
-from transformers import Qwen2_5_VLForConditionalGeneration
+from transformers import Qwen2VLForConditionalGeneration
 import gc
 import os
 
@@ -8,7 +8,7 @@ def export_model_info(model_path, name, output_file):
     print(f"🔍 ĐANG SOI CHI TIẾT MODEL: {name}")
     print(f"{'='*60}")
     
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
         model_path,
         device_map="cpu", 
         torch_dtype=torch.bfloat16,
@@ -50,6 +50,6 @@ def export_model_info(model_path, name, output_file):
     gc.collect()
 
 if __name__ == "__main__":
-    BASE_MODEL = r"./weights/Qwen2.5-VL-3B-Instruct"
+    BASE_MODEL = r"./weights/Qwen2-VL-2B-Instruct"
     
     export_model_info(BASE_MODEL, "BẢN GỐC (16-BIT)", "arch_base_16bit.txt")

@@ -1,7 +1,7 @@
 import sys
 import os
 import torch
-from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration, GPTQConfig, AutoConfig
+from transformers import AutoProcessor, Qwen2VLForConditionalGeneration, GPTQConfig, AutoConfig
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.dataset_loader import ScienceQALocalLoader
@@ -33,7 +33,7 @@ class QwenGPTQQuantizer:
         config.use_cache = False
 
         try:
-            model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+            model = Qwen2VLForConditionalGeneration.from_pretrained(
                 self.base_model_path,
                 config=config,
                 quantization_config=gptq_config,
@@ -54,8 +54,8 @@ class QwenGPTQQuantizer:
             sys.exit(1) 
 
 if __name__ == "__main__":
-    BASE_MODEL = r"./weights/Qwen2.5-VL-3B-Instruct"
-    SAVE_DIR = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3"
+    BASE_MODEL = r"./weights/Qwen2-VL-2B-Instruct"
+    SAVE_DIR = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3"
     DATA_PATH = r"./data/science_qa/validation-00000-of-00001-6c7328ff6c84284c.parquet"
     
     quantizer = QwenGPTQQuantizer(BASE_MODEL, SAVE_DIR, DATA_PATH)
