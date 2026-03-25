@@ -41,7 +41,7 @@ def train_r3_quant_grpo(model_dir: str, train_data, output_dir: str):
         per_device_train_batch_size=1, 
         gradient_accumulation_steps=4,
         gradient_checkpointing=True, 
-        num_generations=8,         
+        num_generations=4,         
         bf16=True,                   
         remove_unused_columns=False, 
         report_to="none"             
