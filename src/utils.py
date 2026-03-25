@@ -3,7 +3,62 @@ import io
 from PIL import Image
 from datasets import Dataset
 
+class ScienceQAGRPODataset(torch.utils.data.Dataset):
+    """
+    Custom dataset for GRPO training that properly handles images.
+    Images are loaded on-the-fly to avoid serialization issues with PIL.
+    """
+    def __init__(self, raw_dataset, max_samples=None):
+        self.items = []
+        self.labels = ["A", "B", "C", "D", "E"]
+        count = 0
+        
+        for item in raw_dataset:
+            if max_samples and count >= max_samples:
+                break
+            if item["image"] is None:
+                continue
+            
+            self.items.append({
+                'image': item["image"],
+                'question': item["question"],
+                'choices': item["choices"],
+                'answer': item["answer"]
+            })
+            count += 1
+    
+    def __len__(self):
+        return len(self.items)
+    
+    def __getitem__(self, idx):
+        item = self.items[idx]
+        
+        # Convert image to PIL on access (not stored in dataset)
+        pil_image = _convert_image_to_pil(item['image'])
+        
+        # Build prompt
+        text_prompt = build_scienceqa_prompt(item['question'], item['choices'])
+        
+        # Build messages
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": pil_image}, 
+                    {"type": "text", "text": text_prompt}
+                ]
+            }
+        ]
+        
+        correct_letter = self.labels[item['answer']]
+        
+        return {
+            "prompt": messages,
+            "ground_truth": correct_letter
+        }
+
 def build_scienceqa_prompt(question: str, choices: list) -> str:
+    """Build a formatted prompt for ScienceQA questions."""
     prompt = f"{question}\n\nChoices:\n"
     labels = ["A", "B", "C", "D", "E"]
     
@@ -45,79 +100,60 @@ def _convert_image_to_pil(image_data):
     return image_data
 
 def prepare_scienceqa_for_grpo(raw_dataset, max_samples=None):
-    formatted_data = {
-        "prompt": [],    
-        "ground_truth": [],
-    }
-    
-    labels = ["A", "B", "C", "D", "E"]
-    count = 0 
-    
-    for item in raw_dataset:
-        if max_samples and count >= max_samples:
-            break
-            
-        if item["image"] is None:
-            continue
-        
-        # Convert image to PIL Image format
-        pil_image = _convert_image_to_pil(item["image"])
-            
-        text_prompt = build_scienceqa_prompt(item["question"], item["choices"])
-        
-        messages = [
-            {
-                "role": "user",
-                "content": [
-                    {"type": "image", "image": pil_image}, 
-                    {"type": "text", "text": text_prompt}
-                ]
-            }
-        ]
-        
-        correct_index = item["answer"]
-        correct_letter = labels[correct_index]
-        
-        formatted_data["prompt"].append(messages)
-        formatted_data["ground_truth"].append(correct_letter)
-        
-        count += 1 
-        
-    return Dataset.from_dict(formatted_data)
+    """
+    Prepare dataset for GRPO training using custom dataset class.
+    Returns a dataset that properly handles images without serialization issues.
+    """
+    return ScienceQAGRPODataset(raw_dataset, max_samples=max_samples)
 
-def prepare_scienceqa_for_sft(raw_dataset, max_samples=None):
+class ScienceQASFTDataset(torch.utils.data.Dataset):
     """
-    Format dataset cho SFT: Tách biệt 'messages' và 'images' theo chuẩn thư viện TRL.
+    Custom dataset for SFT training that properly handles images.
+    Images are loaded on-the-fly to avoid serialization issues with PIL.
     """
-    # 1. THÊM CỘT "images" riêng biệt
-    formatted_data = {
-        "messages": [], 
-        "images": [] 
-    }
-    
-    labels = ["A", "B", "C", "D", "E"]
-    count = 0 
-    
-    for item in raw_dataset:
-        if max_samples and count >= max_samples:
-            break
+    def __init__(self, raw_dataset, max_samples=None):
+        self.items = []
+        self.labels = ["A", "B", "C", "D", "E"]
+        count = 0
+        
+        for item in raw_dataset:
+            if max_samples and count >= max_samples:
+                break
+            if item["image"] is None:
+                continue
             
-        if item["image"] is None:
-            continue
-            
-        # 2. Câu hỏi của User (Chỉ để type="image" làm placeholder)
-        text_prompt = build_scienceqa_prompt(item["question"], item["choices"])
+            self.items.append({
+                'image': item["image"],
+                'question': item["question"],
+                'choices': item["choices"],
+                'answer': item["answer"],
+                'solution': item.get("solution", "Reasoning based on the image.")
+            })
+            count += 1
+    
+    def __len__(self):
+        return len(self.items)
+    
+    def __getitem__(self, idx):
+        item = self.items[idx]
+        
+        # Convert image to PIL on access (not stored in dataset)
+        pil_image = _convert_image_to_pil(item['image'])
+        
+        # Build prompt
+        text_prompt = build_scienceqa_prompt(item['question'], item['choices'])
+        
+        # Build messages
         user_message = {
             "role": "user",
             "content": [
-                {"type": "image"}, # QUAN TRỌNG: Xóa "image": item["image"] đi
+                {"type": "image"},
                 {"type": "text", "text": text_prompt}
             ]
         }
         
-        # 3. Câu trả lời của Assistant
-        correct_letter = labels[item["answer"]]
-        solution_text = item.get("solution", "Reasoning based on the image.")
+        correct_letter = self.labels[item['answer']]
+        solution_text = item['solution']
         
         assistant_text = (
             f"<think>\n{solution_text}\n</think>\n"
@@ -130,11 +166,14 @@ def prepare_scienceqa_for_sft(raw_dataset, max_samples=None):
             ]
         }
         
-        # 4. Gom dữ liệu vào 2 cột riêng biệt
-        formatted_data["messages"].append([user_message, assistant_message])
-        # Convert image to PIL format and store as list
-        pil_image = _convert_image_to_pil(item["image"])
-        formatted_data["images"].append([pil_image]) 
-        count += 1 
-        
-    return Dataset.from_dict(formatted_data)
+        return {
+            "messages": [user_message, assistant_message],
+            "images": [pil_image]
+        }
+
+def prepare_scienceqa_for_sft(raw_dataset, max_samples=None):
+    """
+    Prepare dataset for SFT training using custom dataset class.
+    Returns a dataset that properly handles images without serialization issues.
+    """
+    return ScienceQASFTDataset(raw_dataset, max_samples=max_samples)
