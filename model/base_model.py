@@ -1,10 +1,10 @@
 import os
 from huggingface_hub import snapshot_download
-from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 import torch
 
 class ModelDownloader:
-    def __init__(self, model_id="Qwen/Qwen2.5-VL-3B-Instruct", local_dir="./weights/Qwen2.5-VL-3B-Instruct"):
+    def __init__(self, model_id="Qwen/Qwen2-VL-2B-Instruct", local_dir="./weights/Qwen2-VL-2B-Instruct"):
         self.model_id = model_id
         self.local_dir = local_dir
 
@@ -21,7 +21,7 @@ class ModelDownloader:
 
     def test_load_local(self):
         processor = AutoProcessor.from_pretrained(self.local_dir)
-        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+        model = Qwen2VLForConditionalGeneration.from_pretrained(
             self.local_dir,
             torch_dtype=torch.bfloat16,
             device_map="auto"

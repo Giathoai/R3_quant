@@ -1,14 +1,25 @@
 import torch
-from transformers import Qwen2_5_VLForConditionalGeneration
+from transformers import Qwen2VLForConditionalGeneration
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 
 def apply_lora_to_quantized_model(model_path):
 
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
         model_path,
         device_map="auto",
         torch_dtype=torch.bfloat16,
     )
+
+    # Configure generation settings to avoid conflicts
+    model.generation_config.max_new_tokens = 512
+    model.generation_config.do_sample = True
+    model.generation_config.top_k = 50
+    model.generation_config.top_p = 0.9
+    model.generation_config.temperature = 0.7
+    
+    # Disable compile mode for compatibility with quantized layers
+    if hasattr(model.generation_config, 'disable_compile'):
+        model.generation_config.disable_compile = True
 
     model = prepare_model_for_kbit_training(model)
 
@@ -40,6 +51,6 @@ def apply_lora_to_quantized_model(model_path):
 
     return peft_model
 
-# if __name__ == "__main__":
-#     QUANT_MODEL_DIR = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3"
-#     model_ready_for_rl = apply_lora_to_quantized_model(QUANT_MODEL_DIR)
+if __name__ == "__main__":
+    QUANT_MODEL_DIR = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3"
+    model_ready_for_rl = apply_lora_to_quantized_model(QUANT_MODEL_DIR)

@@ -3,7 +3,7 @@ import pandas as pd
 import io
 from PIL import Image
 from tqdm import tqdm
-from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 from qwen_vl_utils import process_vision_info
 
 class VLMQEvaluator:
@@ -15,7 +15,7 @@ class VLMQEvaluator:
 
         print(f"Đang tải model nén từ: {model_path}...")
         self.processor = AutoProcessor.from_pretrained(model_path)
-        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+        self.model = Qwen2VLForConditionalGeneration.from_pretrained(
             model_path,
             device_map="auto",
             torch_dtype=torch.bfloat16
@@ -100,7 +100,7 @@ class VLMQEvaluator:
         print("="*50)
 
 if __name__ == "__main__":
-    MODEL_PATH = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3"
+    MODEL_PATH = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3"
     DATA_PATH = r"./data/science_qa/test-00000-of-00001-f0e719df791966ff.parquet"
     
     evaluator = VLMQEvaluator(MODEL_PATH, DATA_PATH, num_samples=50)

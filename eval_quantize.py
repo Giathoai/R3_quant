@@ -5,7 +5,7 @@ import io
 import gc
 import re
 from PIL import Image
-from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
+from transformers import AutoProcessor, Qwen2VLForConditionalGeneration
 from qwen_vl_utils import process_vision_info
 import pandas as pd
 from tqdm import tqdm
@@ -15,7 +15,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from data.dataset_loader import ScienceQALocalLoader
 
 def evaluate_model(model_path, df, lora_path=None):
-    model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
+    model = Qwen2VLForConditionalGeneration.from_pretrained(
         model_path,
         device_map="auto",
         torch_dtype=torch.bfloat16,
@@ -103,8 +103,8 @@ def evaluate_model(model_path, df, lora_path=None):
     return accuracy, predictions
 
 if __name__ == "__main__":
-    BASE_MODEL_PATH = r"./weights/Qwen2.5-VL-3B-Instruct"
-    QUANTIZED_MODEL_PATH = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3"
+    BASE_MODEL_PATH = r"./weights/Qwen2-VL-2B-Instruct"
+    QUANTIZED_MODEL_PATH = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3"
     SFT_MODEL_PATH = r"./sft_baseline_checkpoints" 
     
     DATA_PATH = r"./data/science_qa/validation-00000-of-00001-6c7328ff6c84284c.parquet"

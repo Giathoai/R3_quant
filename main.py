@@ -23,9 +23,9 @@ def download_data():
         print("Dataset đã tồn tại, bỏ qua bước tải.")
 
 def download_model():
-    print("\n--- 3. Đang tải Model Qwen2.5-VL-3B-Instruct ---")
-    model_id = "Qwen/Qwen2.5-VL-3B-Instruct"
-    local_dir = "./weights/Qwen2.5-VL-3B-Instruct"
+    print("\n--- 3. Đang tải Model Qwen2-VL-2B-Instruct ---")
+    model_id = "Qwen/Qwen2-VL-2B-Instruct"
+    local_dir = "./weights/Qwen2-VL-2B-Instruct"
     
     if not os.path.exists(os.path.join(local_dir, "config.json")):
         print(f"Đang tải model {model_id} (quá trình này có thể lâu)...")
