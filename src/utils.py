@@ -110,18 +110,41 @@ def build_scienceqa_prompt(question: str, choices: list) -> str:
     )
     return prompt
 
-def _convert_image_to_pil(image_data):
-    """Convert image data from HuggingFace format to PIL Image."""
-    if isinstance(image_data, Image.Image):
-        return image_data
-    elif isinstance(image_data, dict):
-        if 'bytes' in image_data:
-            return Image.open(io.BytesIO(image_data['bytes'])).convert('RGB')
-        elif 'path' in image_data:
-            return Image.open(image_data['path']).convert('RGB')
-    elif isinstance(image_data, str):
-        return Image.open(image_data).convert('RGB')
-    return image_data
+def prepare_scienceqa_for_grpo(raw_dataset, max_samples=None):
+    formatted_data = {
+        "prompt": [],       
+        "ground_truth": [], 
+        "hint": []
+    }
+    
+    labels = ["A", "B", "C", "D", "E"]
+    count = 0 
+    
+    for item in raw_dataset:
+        if max_samples and count >= max_samples:
+            break
+        if item["image"] is None:
+            continue
+            
+        text_prompt = build_scienceqa_prompt(item["question"], item["choices"])
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image", "image": item["image"]}, 
+                    {"type": "text", "text": text_prompt}
+                ]
+            }
+        ]
+        correct_letter = labels[item["answer"]]
+        
+        formatted_data["prompt"].append(messages)
+        formatted_data["ground_truth"].append(correct_letter)
+        formatted_data["hint"].append(item.get("hint", "") or "")
+        
+        count += 1 
+        
+    return Dataset.from_dict(formatted_data)
 
 def prepare_scienceqa_for_grpo(raw_dataset, processor, max_samples=None):
     """

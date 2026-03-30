@@ -51,10 +51,11 @@ def train_sft_baseline(model_dir: str, train_data, output_dir: str):
     trainer.save_model(output_dir)
     processor.save_pretrained(output_dir) 
 
-if __name__ == "__main__":
-    raw_scienceqa = load_dataset("derek-thomas/ScienceQA", split="validation")
-    
-    MODEL_DIR = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3" 
-    OUTPUT_DIR = r"./sft_baseline_checkpoints" 
-    
-    train_sft_baseline(MODEL_DIR, raw_scienceqa, OUTPUT_DIR)
+# Bỏ qua phần chạy độc lập do đã được tích hợp vào main.py
+# if __name__ == "__main__":
+#     raw_scienceqa = load_dataset("derek-thomas/ScienceQA", split="validation")
+#     
+#     MODEL_DIR = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3" 
+#     OUTPUT_DIR = r"./sft_baseline_checkpoints" 
+#     
+#     train_sft_baseline(MODEL_DIR, raw_scienceqa, OUTPUT_DIR)

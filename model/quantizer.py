@@ -53,10 +53,11 @@ class QwenGPTQQuantizer:
             print(f"--- error: {e} ---")
             sys.exit(1) 
 
-if __name__ == "__main__":
-    BASE_MODEL = r"./weights/Qwen2-VL-2B-Instruct"
-    SAVE_DIR = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3"
-    DATA_PATH = r"./data/science_qa/validation-00000-of-00001-6c7328ff6c84284c.parquet"
-    
-    quantizer = QwenGPTQQuantizer(BASE_MODEL, SAVE_DIR, DATA_PATH)
-    quantizer.quantize_and_save(bits=3)
+# Bỏ qua phần chạy độc lập do đã được tích hợp vào main.py
+# if __name__ == "__main__":
+#     BASE_MODEL = r"./weights/Qwen2-VL-2B-Instruct"
+#     SAVE_DIR = r"./weights/Qwen2-VL-2B-Instruct-GPTQ-Int3"
+#     DATA_PATH = r"./data/science_qa/validation-00000-of-00001-6c7328ff6c84284c.parquet"
+#     
+#     quantizer = QwenGPTQQuantizer(BASE_MODEL, SAVE_DIR, DATA_PATH)
+#     quantizer.quantize_and_save(bits=3)
