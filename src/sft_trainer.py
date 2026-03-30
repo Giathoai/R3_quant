@@ -1,6 +1,14 @@
-import torch
-import sys
 import os
+import sys
+
+# Disable wandb to avoid protobuf compatibility issues on Kaggle
+os.environ["WANDB_DISABLED"] = "true"
+
+# Monkey-patch transformers to skip wandb availability check
+from transformers.integrations import integration_utils
+integration_utils.is_wandb_available = lambda: False
+
+import torch
 from trl import SFTConfig, SFTTrainer
 from transformers import AutoProcessor
 from datasets import load_dataset
