@@ -31,8 +31,9 @@ def build_scienceqa_prompt(question: str, choices: list) -> str:
 
 def prepare_scienceqa_for_grpo(raw_dataset, max_samples=None):
     formatted_data = {
-        "prompt": [],    
-        "ground_truth": [],
+        "prompt": [],       
+        "ground_truth": [], 
+        "hint": []
     }
     
     labels = ["A", "B", "C", "D", "E"]
@@ -41,12 +42,10 @@ def prepare_scienceqa_for_grpo(raw_dataset, max_samples=None):
     for item in raw_dataset:
         if max_samples and count >= max_samples:
             break
-            
         if item["image"] is None:
             continue
             
         text_prompt = build_scienceqa_prompt(item["question"], item["choices"])
-        
         messages = [
             {
                 "role": "user",
@@ -56,12 +55,11 @@ def prepare_scienceqa_for_grpo(raw_dataset, max_samples=None):
                 ]
             }
         ]
-        
-        correct_index = item["answer"]
-        correct_letter = labels[correct_index]
+        correct_letter = labels[item["answer"]]
         
         formatted_data["prompt"].append(messages)
         formatted_data["ground_truth"].append(correct_letter)
+        formatted_data["hint"].append(item.get("hint", "") or "")
         
         count += 1 
         

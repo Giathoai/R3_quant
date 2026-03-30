@@ -38,6 +38,7 @@ def train_r3_quant_grpo(model_dir: str, train_data, output_dir: str):
 
     reward_funcs = [
         format_reward_func,
+        vision_grounding_reward_func,
         accuracy_reward_func
     ]
 
@@ -55,10 +56,11 @@ def train_r3_quant_grpo(model_dir: str, train_data, output_dir: str):
     trainer.save_model(output_dir)
     processor.save_pretrained(output_dir) 
 
-if __name__ == "__main__":
-    raw_scienceqa = load_dataset("derek-thomas/ScienceQA", split="validation")
-    
-    MODEL_DIR = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3" 
-    OUTPUT_DIR = r"./r3_quant_checkpoints"
-    
-    train_r3_quant_grpo(MODEL_DIR, raw_scienceqa, OUTPUT_DIR)
+# Bỏ qua phần chạy độc lập do đã được tích hợp vào main.py
+# if __name__ == "__main__":
+#     raw_scienceqa = load_dataset("derek-thomas/ScienceQA", split="validation")
+#     
+#     MODEL_DIR = r"./weights/Qwen2.5-VL-3B-Instruct-GPTQ-Int3" 
+#     OUTPUT_DIR = r"./r3_quant_checkpoints"
+#     
+#     train_r3_quant_grpo(MODEL_DIR, raw_scienceqa, OUTPUT_DIR)

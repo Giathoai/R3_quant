@@ -8,3 +8,4 @@ qwen-vl-utils
 optimum
 gptqmodel
 peft
+trl
